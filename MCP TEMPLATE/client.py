@@ -38,27 +38,6 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
-prompt="""You are an AI assistant integrated into a Model Context Protocol (MCP) system. 
-    You have access to the following tools:
-
-    {tools_list}
-
-    Each tool has a name and a function described in its metadata. Your task is to:
-    1. Read the user's input describing what they want to achieve.
-    2. Determine the best tool from the list that can be used to accomplish their task.
-    3. If multiple tools are required in sequence, list them in order and describe how they will work together.
-    4. If no tools match the user's description, reply with: "No suitable tool available."
-
-    Respond in JSON format as follows:
-
-    {
-    "selected_tools": ["tool_name_1", "tool_name_2", ...],
-    "explanation": "Brief explanation why these tools are selected and how they can solve the user's task."
-    }
-
-    Here is the user request:
-    "{user_request}"
-    """
 
 
 
