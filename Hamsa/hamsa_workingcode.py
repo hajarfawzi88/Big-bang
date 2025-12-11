@@ -98,31 +98,80 @@ def transcribe_audio(audio_input):
 # Generate Response
 # -----------------------------
 # Keep history outside the function so it persists across calls
-history = [{"role": "system", "content": "You are a helpful AI call assistant."}]
+history = [{"role": "system", "content": "You are a helpful AI call assistant. Always reply with proper basic Arabic diacritical marks and language that matches the users ones."}]
+
+"""
+Cerebras streaming LLM response generator.
+Replaces the OpenAI completion block.
+
+Model used: gpt-oss-120b
+"""
+
+import os
+from cerebras.cloud.sdk import Cerebras
+
+cerebras_client = Cerebras(api_key=os.getenv("CEREBRAS_API_KEY"))
 
 async def generate_response(user_text: str) -> str:
     # Add user message to history
-    history.append({"role": "user","message":"you are a helpful assistant, reply naturally according to the user's language and dialect", "content": user_text})
+    history.append({"role": "user", "content": user_text})
 
-    # Call OpenAI asynchronously
-    response = await client.chat.completions.create(
-        model="gpt-4o-mini",  # or another model you prefer
-        messages=history
+    # Prepare messages in required format
+    messages = [{"role": msg["role"], "content": msg["content"]} for msg in history]
+
+    # Create streaming completion request
+    completion = cerebras_client.chat.completions.create(
+        messages=messages,
+        model="gpt-oss-120b",
+        max_completion_tokens=1024,
+        temperature=0.2,
+        stream=False
     )
 
-    # Extract assistant reply
-    reply_text = response.choices[0].message.content
+    # Collect and print streamed output
+    full_text = ""
 
-    # Add assistant reply to history
-    history.append({"role": "assistant", "content": reply_text})
+    # Add reply to history
+    full_text=completion.choices[0].message.content
+    history.append({"role": "assistant", "content": full_text})
+
+    return full_text
 
 
-    return reply_text
+
+
+
+
+# async def generate_response(user_text: str) -> str:
+#     # Add user message to history
+#     history.append({"role": "user","message":"you are a helpful assistant, reply naturally according to the user's language and dialect", "content": user_text})
+
+#     # Call OpenAI asynchronously
+#         # OLD MODEL COMPLETION - COMMENTED OUT
+#     reply = await client.chat.completions.create(
+#          model="gpt-oss-120b",
+#          messages=history
+#      )
+
+#     # NEW MODEL (gpt-4o-mini)
+#     response = await client.chat.completions.create(
+#         model="gpt-4o-mini",  # or another model you prefer
+#         messages=history
+#     )
+
+#     # Extract assistant reply
+#     reply_text = response.choices[0].message.content
+
+#     # Add assistant reply to history
+#     history.append({"role": "assistant", "content": reply_text})
+
+
+#     return reply_text
 
 # -----------------------------
 # Text-to-Speech (TTS)
 # -----------------------------
-def speak_text(text, speaker="Majd", dialect="egy"):
+def speak_text(text, speaker="Ahmed", dialect="egy"):
     payload = {
         "text": text,
         "speaker": speaker,
